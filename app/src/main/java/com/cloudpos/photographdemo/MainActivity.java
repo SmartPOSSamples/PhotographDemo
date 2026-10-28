@@ -24,6 +24,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -57,16 +58,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Button btn_store = (Button) findViewById(R.id.btn_store);
         Button btn_cancel = (Button) findViewById(R.id.btn_cancel);
 
-        btn_take.setOnClickListener(this);
-        btn_scan.setOnClickListener(this);
-        btn_switch.setOnClickListener(this);
-        btn_store.setOnClickListener(this);
-        btn_cancel.setOnClickListener(this);
+        if (btn_take != null) btn_take.setOnClickListener(this);
+        if (btn_scan != null) btn_scan.setOnClickListener(this);
+        if (btn_switch != null) btn_switch.setOnClickListener(this);
+        if (btn_store != null) btn_store.setOnClickListener(this);
+        if (btn_cancel != null) btn_cancel.setOnClickListener(this);
 
         surfaceHolder = surfaceView.getHolder();
         surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         surfaceHolder.addCallback(new SurfaceCallback());
         surfaceHolder.setKeepScreenOn(true);
+
+        surfaceView.setOnClickListener(v -> {
+            if (camera != null && isPreview) {
+                try {
+                    camera.autoFocus((success, camera1) -> {
+                        Log.d(TAG, "autoFocus result: " + success);
+                    });
+                } catch (Exception e) {
+                    Log.e(TAG, "autoFocus error", e);
+                }
+            }
+        });
     }
 
     @Override
@@ -80,8 +93,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.btn_scan:
                 Intent getIntent = new Intent(Intent.ACTION_GET_CONTENT);
                 getIntent.setType("image/*");
-                Intent pickIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                pickIntent.setType("image/*");
+                Intent pickIntent = new Intent(Intent.ACTION_PICK);
+                pickIntent.setDataAndType(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
                 Intent chooserIntent = Intent.createChooser(getIntent, "Select Image");
                 chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{pickIntent});
                 startActivityForResult(chooserIntent, 1);
@@ -140,6 +153,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         Camera.Size previewSize = params.getSupportedPreviewSizes().get(0);
         params.setPreviewSize(previewSize.width, previewSize.height);
+
+        // 设置自动变焦/对焦模式 (Continuous/Auto Focus)
+        List<String> focusModes = params.getSupportedFocusModes();
+        if (focusModes != null) {
+            if (focusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
+                params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+            } else if (focusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)) {
+                params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
+            } else if (focusModes.contains(Camera.Parameters.FOCUS_MODE_AUTO)) {
+                params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+            }
+        }
 
         camera.setParameters(params);
     }

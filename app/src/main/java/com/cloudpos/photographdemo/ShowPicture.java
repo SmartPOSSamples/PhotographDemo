@@ -23,14 +23,18 @@ public class ShowPicture extends Activity {
 
         ImageView iv_show = (ImageView) findViewById(R.id.iv_show);
 
-        Uri uri = this.getIntent().getData();
-        Log.e(MainActivity.TAG, uri.toString());
-        ContentResolver cr = this.getContentResolver();
-        try {
-            Bitmap bitmap = BitmapFactory.decodeStream(cr.openInputStream(uri));
-            iv_show.setImageBitmap(bitmap);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+        Uri uri = this.getIntent() != null ? this.getIntent().getData() : null;
+        if (uri != null) {
+            Log.e(MainActivity.TAG, uri.toString());
+            ContentResolver cr = this.getContentResolver();
+            try {
+                Bitmap bitmap = BitmapFactory.decodeStream(cr.openInputStream(uri));
+                if (iv_show != null) {
+                    iv_show.setImageBitmap(bitmap);
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
         }
 
     }
